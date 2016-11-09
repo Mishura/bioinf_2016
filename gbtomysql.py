@@ -4,12 +4,6 @@ from Bio.SeqFeature import FeatureLocation
 from Bio import SeqIO
 import argparse
 
-
-#####
-#
-#	CONNECT TO THE DATABASE
-#####
-
 locations = ((1, 'CDS','CDS'),
 (2, 'Repeat region','repeat_region'),
 (4, 'Ribosomal RNA','rRNA'),
@@ -26,12 +20,26 @@ def get_id_location(type):
 
 def process_file(path_to_genbank):
 
+
+#####
+#	CONNECT TO THE DATABASE
+#####
+
 	try:
 		cnx = mdb.connect('localhost', 'root', 'mysqlAdmin', 'bioinf_2016');  
 		cursor = cnx.cursor()
 	except:
 		print 'Check correctness of connection to mysql.'
-	cursor.execute("""
+
+#####
+#	Check, whether were gene_list table created ot not.
+#####
+
+	try:
+		cursor.execute("SELECT * FROM gene_list")
+		cursor.fetchone()
+	except:
+		cursor.execute("""
 CREATE TABLE IF NOT EXISTS `gene_list` (
   `gene_id` int(11) NOT NULL AUTO_INCREMENT,
   `gene_name` varchar(45) DEFAULT NULL,
@@ -42,16 +50,29 @@ CREATE TABLE IF NOT EXISTS `gene_list` (
   `feature_id` int(11) NOT NULL,
   PRIMARY KEY (`gene_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;""")
-	cnx.commit()
+		cnx.commit()
+		print 'It seems that you didn`t create table gene_list in database bioinf_2016. Script did it for your.'
+
+
+#####
+#	TRUNCATE gene_list;
+#####
 
 	cursor.execute("TRUNCATE gene_list;");
 	cnx.commit()
+
+
+#####
+#	PARSE genbank file and CREATE a query.
+#####
 	sql = "INSERT INTO `gene_list`(`gene_name`, `locus_tag`, `start`, `end`, `strand`, `feature_id`) VALUES "
 	try:
 		gb = SeqIO.parse(open(path_to_genbank,"r"), "genbank")
 	except:
 		print 'THIS FILE DOES NOT EXIST: %s' % path_to_genbank
 		return
+
+
 	for gb_record in gb:
 		for ind, feature in enumerate(gb_record.features):
 			feature_id = get_id_location(feature.type)
