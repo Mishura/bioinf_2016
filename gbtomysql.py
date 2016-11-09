@@ -62,7 +62,7 @@ def process_file(path_to_genbank):
 					sql += "('%s','%s',%s,%s,%s,%s)," % (gene_name, locus_tag, start, end, strand, feature_id)
 				elif gene_name is None and locus_tag is None:
 					sql += "(%s,%s,%s,%s,%s,%s)," % ("NULL", "NULL", start, end, strand, feature_id)
-				print "(%s,%s,%s,%s,%s,%s)," % (gene_name, locus_tag, start, end, strand, feature_id)
+				print "INSERT INTO `gene_list`(`gene_name`, `locus_tag`, `start`, `end`, `strand`, `feature_id`) VALUES (%s,%s,%s,%s,%s,%s);" % (gene_name, locus_tag, start, end, strand, feature_id)
 	try:
 		cursor.execute(sql[:-1])
 		cnx.commit()
