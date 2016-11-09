@@ -25,13 +25,26 @@ def get_id_location(type):
 			return j[0]
 
 def process_file(path_to_genbank):
+
 	try:
 		cnx = mdb.connect('localhost', 'root', 'mysqlAdmin', 'bioinf_2016');  
 		cursor = cnx.cursor()
 	except:
 		print 'Check correctness of connection to mysql.'
+	cursor.execute("""
+CREATE TABLE IF NOT EXISTS `gene_list` (
+  `gene_id` int(11) NOT NULL AUTO_INCREMENT,
+  `gene_name` varchar(45) DEFAULT NULL,
+  `locus_tag` varchar(45) DEFAULT NULL,
+  `start` int(11) NOT NULL,
+  `end` int(11) NOT NULL,
+  `strand` int(2) NOT NULL,
+  `feature_id` int(11) NOT NULL,
+  PRIMARY KEY (`gene_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;""")
+	cnx.commit()
 
-	cursor.execute("TRUNCATE gene_list");
+	cursor.execute("TRUNCATE gene_list;");
 	cnx.commit()
 	sql = "INSERT INTO `gene_list`(`gene_name`, `locus_tag`, `start`, `end`, `strand`, `feature_id`) VALUES "
 	try:
@@ -63,15 +76,12 @@ def process_file(path_to_genbank):
 				elif gene_name is None and locus_tag is None:
 					sql += "(%s,%s,%s,%s,%s,%s)," % ("NULL", "NULL", start, end, strand, feature_id)
 				print "INSERT INTO `gene_list`(`gene_name`, `locus_tag`, `start`, `end`, `strand`, `feature_id`) VALUES (%s,%s,%s,%s,%s,%s);" % (gene_name, locus_tag, start, end, strand, feature_id)
-	try:
-		cursor.execute(sql[:-1])
-		cnx.commit()
-		print 'GREAT! LET`S LOOK AT THE DATABASE bioinf_2016! PLEASE, CONNECT TO MySQL database.'
-	except:
-		print 'SOMETHING WRONG! ASK MISHA ROTKEVICH.'
+	cursor.execute(sql[:-1])
+	cnx.commit()
+	print 'GREAT! LET`S LOOK AT THE DATABASE bioinf_2016! PLEASE, CONNECT TO MySQL database.'
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Parse GenBank file and upload it to the database bioinf_2016.')
+	parser = argparse.ArgumentParser(description='Parse GenBank file and upload it to the database bioinf_2016 to the table gene_list. If it wasn`t created, it won`t work. ')
 	parser.add_argument('path', metavar='<path_to_genbank_file>', type=str,
 	                   help='path to GenBank file')
 	args = parser.parse_args()
